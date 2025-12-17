@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SwiftAid Admin Dashboard</title>
+
+    <!-- Icons & Chart.js -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+      <div class="login-box">
+        <div class="login-header">
+          <h1><i class="fas fa-shield-alt"></i> SwiftAid Admin</h1>
+          <p>Access the emergency management dashboard</p>
+        </div>
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              class="form-control"
+              value="admin"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              class="form-control"
+              value="admin123"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary login-submit">
+            <i class="fas fa-sign-in-alt"></i> Login
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="dashboard-root" style="display: none;">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h2><i class="fas fa-shield-alt"></i> SwiftAid</h2>
+          <p>Admin Dashboard</p>
+        </div>
+        <div class="sidebar-menu">
+          <div class="menu-item active" data-tab="dashboard-tab">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+          </div>
+          <div class="menu-item" data-tab="incidents-tab">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>All Incidents</span>
+          </div>
+          <div class="menu-item" data-tab="users-tab">
+            <i class="fas fa-users"></i>
+            <span>Users</span>
+          </div>
+          <div class="menu-item" data-tab="hospitals-tab">
+            <i class="fas fa-hospital"></i>
+            <span>Hospitals</span>
+          </div>
+          <div class="menu-item" data-tab="tracking-tab">
+            <i class="fas fa-ambulance"></i>
+            <span>Incident Tracking</span>
+          </div>
+          <div class="menu-item" data-tab="police-tab">
+            <i class="fas fa-shield-alt"></i>
+            <span>Police Stations</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="header">
+          <h1 id="pageTitle">Dashboard Overview</h1>
+          <div class="user-info">
+            <div class="user-summary">
+              <div class="user-avatar">A</div>
+              <div class="user-meta">
+                <div class="user-name">Admin User</div>
+                <div class="user-role">Administrator</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content active">
+          <div class="stats-container">
+            <div class="stat-card">
+              <div class="stat-icon users"><i class="fas fa-users"></i></div>
+              <div class="stat-info">
+                <h3 id="totalUsers">0</h3>
+                <p>Total Users</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon incidents">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="totalIncidents">0</h3>
+                <p>Total Incidents</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon active">
+                <i class="fas fa-bell"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="todayIncidents">0</h3>
+                <p>Today's Incidents</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon hospitals"><i class="fas fa-hospital"></i></div>
+              <div class="stat-info">
+                <h3 id="totalHospitals">0</h3>
+                <p>Total Hospitals</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon police"><i class="fas fa-shield-alt"></i></div>
+              <div class="stat-info">
+                <h3 id="totalPolice">0</h3>
+                <p>Police Stations</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="content-section">
+            <div class="section-header">
+              <h2>Recent Incidents</h2>
+              <div class="section-actions">
+                <button class="btn btn-outline" id="refreshDashboardBtn">
+                  <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+              </div>
+            </div>
+            <div id="recentIncidentsContainer">
+              <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading incidents...
+              </div>
+            </div>
+          </div>
+
+          <div class="content-section">
+            <div class="section-header">
+              <h2>Incident Types</h2>
+            </div>
+            <div class="chart-container">
+              <canvas id="incidentTypesChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Incidents Tab -->
+        <div id="incidents-tab" class="tab-content">
+          <div class="content-section">
+            <div class="section-header">
+              <h2>All Incidents</h2>
+              <div class="section-actions">
+                <button class="btn btn-outline" id="refreshIncidentsBtn">
+                  <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-primary" id="exportIncidentsBtn">
+                  <i class="fas fa-download"></i> Export
+                </button>
+              </div>
+            </div>
+            <div id="incidentsContainer">
+              <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading incidents...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users-tab" class="tab-content">
+          <div class="content-section">
+            <div class="section-header">
+              <h2>User Management</h2>
+              <div class="section-actions">
+                <button class="btn btn-outline" id="refreshUsersBtn">
+                  <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+              </div>
+            </div>
+            <div id="usersContainer">
+              <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading users...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hospitals Tab -->
+        <div id="hospitals-tab" class="tab-content">
+          <div class="content-section">
+            <div class="section-header">
+              <h2>Hospital Management</h2>
+              <div class="section-actions">
+                <button class="btn btn-outline" id="refreshHospitalsBtn">
+                  <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+              </div>
+            </div>
+            <div id="hospitalsContainer">
+              <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading hospitals...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Incident Tracking Tab -->
+        <div id="tracking-tab" class="tab-content">
+          <div class="content-section">
+            <div class="section-header">
+              <h2>Incident & Ambulance Tracking</h2>
+              <div class="section-actions">
+                <button class="btn btn-outline" id="refreshTrackingBtn">
+                  <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-primary" id="createTestAssignmentsBtn">
+                  <i class="fas fa-plus"></i> Create Test Data
+                </button>
+              </div>
+            </div>
+            <div id="trackingContainer">
+              <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading incident assignments...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Police Officers Tab -->
+        <div id="police-tab" class="tab-content">
+          <div class="content-section">
+            <div class="section-header">
+              <h2>Police Officer Management</h2>
+              <div class="section-actions">
+                <button class="btn btn-outline" id="refreshPoliceBtn">
+                  <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+              </div>
+            </div>
+            <div id="policeContainer">
+              <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading police officers...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Incident Details Modal -->
+    <div id="incidentModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Incident Details</h2>
+          <button class="modal-close" data-close="incidentModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body" id="incidentModalContent">
+          <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading incident details...</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" data-close="incidentModal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div id="userModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>User Details</h2>
+          <button class="modal-close" data-close="userModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body" id="userModalContent">
+          <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading user details...</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" data-close="userModal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hospital Details Modal -->
+    <div id="hospitalModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Hospital Details</h2>
+          <button class="modal-close" data-close="hospitalModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body" id="hospitalModalContent">
+          <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading hospital details...</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" data-close="hospitalModal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ambulance Details Modal -->
+    <div id="ambulanceModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-ambulance"></i> Ambulance Details</h2>
+          <button class="modal-close" data-close="ambulanceModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body" id="ambulanceModalContent">
+          <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading ambulance details...</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" data-close="ambulanceModal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Police Officer Details Modal -->
+    <div id="policeModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-shield-alt"></i> Police Officer Details</h2>
+          <button class="modal-close" data-close="policeModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body" id="policeModalContent">
+          <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading police officer details...</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" data-close="policeModal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+      // ---------- CONFIG ----------
+      const API_BASE_URL = "";
+      let adminToken = "";
+      window.incidentTypesChartInstance = null;
+
+      // ---------- UTILITIES ----------
+      function parseTimestamp(timestamp) {
+        if (!timestamp) return "Unknown";
+        
+        try {
+          let date;
+          
+          // Handle MongoDB nested timestamp object like {$date: "ISO_STRING"}
+          if (timestamp && typeof timestamp === 'object' && timestamp.$date) {
+            date = new Date(timestamp.$date);
+          } 
+          // Handle string timestamp
+          else if (typeof timestamp === 'string') {
+            date = new Date(timestamp);
+          }
+          // Handle number timestamp
+          else if (typeof timestamp === 'number') {
+            date = new Date(timestamp);
+          }
+          // Handle direct Date object
+          else if (timestamp instanceof Date) {
+            date = timestamp;
+          }
+          else {
+            return String(timestamp);
+          }
+          
+          if (isNaN(date.getTime())) {
+            return "Invalid Date";
+          }
+          
+          return date.toLocaleString();
+        } catch (error) {
+          console.error("Error parsing timestamp:", error, timestamp);
+          return "Date Error";
+        }
+      }
+
+      function parseDateOnly(timestamp) {
+        if (!timestamp) return "Unknown";
+        
+        try {
+          let date;
+          
+          // Handle MongoDB nested timestamp object
+          if (timestamp && typeof timestamp === 'object' && timestamp.$date) {
+            date = new Date(timestamp.$date);
+          } 
+          else if (typeof timestamp === 'string') {
+            date = new Date(timestamp);
+          }
+          else if (typeof timestamp === 'number') {
+            date = new Date(timestamp);
+          }
+          else if (timestamp instanceof Date) {
+            date = timestamp;
+          }
+          else {
+            return String(timestamp);
+          }
+          
+          if (isNaN(date.getTime())) {
+            return "Invalid Date";
+          }
+          
+          return date.toLocaleDateString();
+        } catch (error) {
+          console.error("Error parsing date:", error);
+          return "Date Error";
+        }
+      }
+
+      function generateGoogleMapsLink(lat, lng) {
+        if (lat === undefined || lng === undefined || lat === null || lng === null) return "N/A";
+        return `https://www.google.com/maps?q=${lat},${lng}&z=15`;
+      }
+
+      function displayLocation(lat, lng) {
+        if (lat === undefined || lng === undefined || lat === null || lng === null) return "N/A";
+        const mapsLink = generateGoogleMapsLink(lat, lng);
+        return `<a href="${mapsLink}" target="_blank" class="map-link" title="Open in Google Maps">
+                  <i class="fas fa-map-marker-alt"></i> View on Map
+                </a>`;
+      }
+
+      // ---------- DOM Shortcuts ----------
+      const loginPage = document.getElementById("loginPage");
+      const dashboard = document.getElementById("dashboard");
+      const loginForm = document.getElementById("loginForm");
+
+      // ---------- TAB MANAGEMENT ----------
+      function showTab(tabId) {
+        document.querySelectorAll(".tab-content").forEach((tab) => {
+          tab.classList.remove("active");
+        });
+        const tabEl = document.getElementById(tabId);
+        if (tabEl) tabEl.classList.add("active");
+
+        document.querySelectorAll(".menu-item").forEach((item) => {
+          item.classList.remove("active");
+        });
+        const menuItem = document.querySelector(`.menu-item[data-tab="${tabId}"]`);
+        if (menuItem) menuItem.classList.add("active");
+
+        const tabTitles = {
+          "dashboard-tab": "Dashboard Overview",
+          "users-tab": "User Management",
+          "incidents-tab": "Incident Management",
+          "hospitals-tab": "Hospital Management",
+          "tracking-tab": "Incident Tracking",
+          "police-tab": "Police Officer Management"
+        };
+        const title = tabTitles[tabId] || "SwiftAid Admin";
+        const pageTitle = document.getElementById("pageTitle");
+        if (pageTitle) pageTitle.textContent = title;
+
+        if (tabId === "dashboard-tab") loadDashboardData();
+        else if (tabId === "users-tab") loadUsersData();
+        else if (tabId === "incidents-tab") loadIncidentsData();
+        else if (tabId === "hospitals-tab") loadHospitalsData();
+        else if (tabId === "tracking-tab") loadTrackingData();
+        else if (tabId === "police-tab") loadPoliceData();
+      }
+
+      // ---------- LOGIN FUNCTIONALITY ----------
+      loginForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.token) {
+            adminToken = data.token;
+            loginPage.style.display = "none";
+            dashboard.style.display = "flex";
+            showTab("dashboard-tab");
+          } else {
+            alert("Login failed: " + (data.error || data.message || "Invalid credentials"));
+          }
+        } catch (error) {
+          console.error("Login error:", error);
+          alert("Login failed: Could not connect to server. Make sure the backend is running.");
+        }
+      });
+
+      // ---------- DASHBOARD DATA ----------
+      async function loadDashboardData() {
+        try {
+          const statsResponse = await fetch(`${API_BASE_URL}/dashboard/stats`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!statsResponse.ok) throw new Error("Failed to fetch stats");
+          const stats = await statsResponse.json();
+
+          document.getElementById("totalUsers").textContent = stats.total_users ?? 0;
+          document.getElementById("totalIncidents").textContent = stats.total_incidents ?? 0;
+          document.getElementById("todayIncidents").textContent = stats.today_incidents ?? 0;
+          document.getElementById("totalHospitals").textContent = stats.total_hospitals ?? 0;
+          document.getElementById("totalPolice").textContent = stats.total_police ?? 0;
+
+          const incidentsResponse = await fetch(`${API_BASE_URL}/dashboard/incidents?limit=5`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!incidentsResponse.ok) throw new Error("Failed to fetch incidents");
+          const incidents = await incidentsResponse.json();
+          displayRecentIncidents(incidents);
+
+          updateIncidentTypesChart(stats.incident_types || {});
+        } catch (error) {
+          console.error("Error loading dashboard:", error);
+          document.getElementById("recentIncidentsContainer").innerHTML =
+            `<div class="error">Failed to load dashboard data: ${error.message}</div>`;
+        }
+      }
+
+      function displayRecentIncidents(incidents) {
+        const container = document.getElementById("recentIncidentsContainer");
+        if (!incidents || incidents.length === 0) {
+          container.innerHTML = `<div class="loading">No incidents found</div>`;
+          return;
+        }
+
+        let html = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        incidents.forEach((incident) => {
+          const isManual = incident.metadata?.manual;
+          const sosType = incident.metadata?.sos_type;
+          const incidentType = isManual
+            ? (sosType === "other" ? "SOS for Others" : "SOS for Self")
+            : "Auto-detected";
+
+          const time = parseTimestamp(incident.created_at ?? incident.timestamp);
+          const location = displayLocation(incident.lat, incident.lng);
+
+          html += `
+            <tr>
+              <td>${incident.user_name ?? "Unknown User"}</td>
+              <td>${incidentType}</td>
+              <td>${location}</td>
+              <td>${time}</td>
+              <td><span class="badge ${isManual ? "danger" : "warning"}">${isManual ? "Manual" : "Auto"}</span></td>
+              <td>
+                <button class="btn btn-outline" onclick="viewIncidentDetails('${incident._id}')"><i class="fas fa-eye"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+      }
+
+      // ---------- INCIDENTS (ALL) ----------
+      async function loadIncidentsData() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/dashboard/incidents`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch incidents");
+          const incidents = await response.json();
+          displayAllIncidents(incidents);
+        } catch (error) {
+          console.error("Error loading incidents:", error);
+          document.getElementById("incidentsContainer").innerHTML =
+            `<div class="error">Failed to load incidents: ${error.message}</div>`;
+        }
+      }
+
+      function displayAllIncidents(incidents) {
+        const container = document.getElementById("incidentsContainer");
+
+        if (!incidents || incidents.length === 0) {
+          container.innerHTML = `<div class="loading">No incidents found</div>`;
+          return;
+        }
+
+        let html = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Email</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Acceleration</th>
+                <th>Time</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        incidents.forEach((incident) => {
+          const isManual = incident.metadata?.manual;
+          const sosType = incident.metadata?.sos_type;
+          const incidentType = isManual
+            ? (sosType === "other" ? "SOS for Others" : "SOS for Self")
+            : "Auto-detected";
+
+          const time = parseTimestamp(incident.created_at ?? incident.timestamp);
+          const location = displayLocation(incident.lat, incident.lng);
+
+          const incidentId = incident._id
+            ? (typeof incident._id === "string" ? incident._id.substring(0, 8) + "..." : "N/A")
+            : "N/A";
+
+          let cleanEmail = incident.user_email ?? "N/A";
+          if (typeof cleanEmail === "string" && cleanEmail.includes(" ")) {
+            cleanEmail = cleanEmail.split(" ")[0];
+          }
+
+          html += `
+            <tr>
+              <td>${incidentId}</td>
+              <td>${incident.user_name ?? "Unknown"}</td>
+              <td title="${cleanEmail}">${cleanEmail}</td>
+              <td>${incidentType}</td>
+              <td>${location}</td>
+              <td>${incident.accel_mag ? (Number(incident.accel_mag).toFixed(2) + " m/s²") : "N/A"}</td>
+              <td>${time}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-outline" onclick="viewIncidentDetails('${incident._id}')"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-danger" onclick="deleteIncident('${incident._id}')"><i class="fas fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+      }
+
+      // ---------- USERS ----------
+      async function loadUsersData() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/users`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch users");
+          const users = await response.json();
+          displayUsers(users);
+        } catch (error) {
+          console.error("Error loading users:", error);
+          document.getElementById("usersContainer").innerHTML =
+            `<div class="error">Failed to load users: ${error.message}</div>`;
+        }
+      }
+
+      function displayUsers(users) {
+        const container = document.getElementById("usersContainer");
+
+        if (!users || users.length === 0) {
+          container.innerHTML = `<div class="loading">No users found</div>`;
+          return;
+        }
+
+        let html = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Joined</th>
+                <th>Incidents</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        users.forEach((user) => {
+          const joinDate = parseDateOnly(user.created_at);
+          let cleanEmail = user.email ?? "N/A";
+          if (typeof cleanEmail === "string" && cleanEmail.includes(" ")) {
+            cleanEmail = cleanEmail.split(" ")[0];
+          }
+
+          html += `
+            <tr>
+              <td>${user.name ?? "N/A"}</td>
+              <td title="${cleanEmail}">${cleanEmail}</td>
+              <td>${user.username ?? "N/A"}</td>
+              <td>${joinDate}</td>
+              <td>${user.total_incidents ?? 0}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-outline" onclick="viewUserDetails('${user._id}')"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-danger" onclick="deleteUser('${user._id}')"><i class="fas fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+      }
+
+      // ---------- HOSPITALS ----------
+      async function loadHospitalsData() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/hospitals`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch hospitals");
+          const hospitals = await response.json();
+          displayHospitals(hospitals);
+        } catch (error) {
+          console.error("Error loading hospitals:", error);
+          document.getElementById("hospitalsContainer").innerHTML =
+            `<div class="error">Failed to load hospitals: ${error.message}</div>`;
+        }
+      }
+
+      function displayHospitals(hospitals) {
+        const container = document.getElementById("hospitalsContainer");
+
+        if (!hospitals || hospitals.length === 0) {
+          container.innerHTML = `<div class="loading">No hospitals found</div>`;
+          return;
+        }
+
+        let html = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Hospital Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Location</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        hospitals.forEach((hospital) => {
+          html += `
+            <tr>
+              <td>${hospital.hospital_name ?? "N/A"}</td>
+              <td>${hospital.email ?? "N/A"}</td>
+              <td>${hospital.phone ?? "N/A"}</td>
+              <td>${hospital.location ?? "N/A"}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-outline" onclick="viewHospitalDetails('${hospital._id}')"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-danger" onclick="deleteHospital('${hospital._id}')"><i class="fas fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+      }
+
+      // ---------- INCIDENT TRACKING ----------
+      async function loadTrackingData() {
+        try {
+          // Load incidents with ambulance assignments
+          const [incidentsResponse, assignmentsResponse] = await Promise.all([
+            fetch(`${API_BASE_URL}/dashboard/incidents`, {
+              headers: { Authorization: `Bearer ${adminToken}` },
+            }),
+            fetch(`${API_BASE_URL}/admin/ambulance-assignments`, {
+              headers: { Authorization: `Bearer ${adminToken}` },
+            })
+          ]);
+
+          if (!incidentsResponse.ok) throw new Error("Failed to fetch incidents");
+          if (!assignmentsResponse.ok) throw new Error("Failed to fetch ambulance assignments");
+
+          const incidents = await incidentsResponse.json();
+          const assignmentsData = await assignmentsResponse.json();
+
+          if (!assignmentsData.success) {
+            throw new Error(assignmentsData.error || "Failed to load assignments");
+          }
+
+          displayTrackingData(incidents, assignmentsData.assignments);
+        } catch (error) {
+          console.error("Error loading tracking data:", error);
+          document.getElementById("trackingContainer").innerHTML =
+            `<div class="error">Failed to load incident assignments: ${error.message}</div>`;
+        }
+      }
+
+      function displayTrackingData(incidents, ambulanceAssignments) {
+        const container = document.getElementById("trackingContainer");
+
+        // Create a map for quick ambulance lookup by incident ID
+        const ambulanceMap = {};
+        ambulanceAssignments.forEach(assignment => {
+          if (assignment.current_incident_id) {
+            ambulanceMap[assignment.current_incident_id] = assignment;
+          }
+        });
+
+        if (!incidents || incidents.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-ambulance fa-3x"></i>
+              <h3>No Incidents Found</h3>
+              <p>No incidents have been reported yet.</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = `
+          <div class="tracking-stats">
+            <div class="tracking-stat">
+              <div class="tracking-stat-value">${incidents.length}</div>
+              <div class="tracking-stat-label">Total Incidents</div>
+            </div>
+            <div class="tracking-stat">
+              <div class="tracking-stat-value">${ambulanceAssignments.length}</div>
+              <div class="tracking-stat-label">Ambulances Assigned</div>
+            </div>
+            <div class="tracking-stat">
+              <div class="tracking-stat-value">${incidents.filter(incident => ambulanceMap[incident._id] || ambulanceMap[incident.incident_id]).length}</div>
+              <div class="tracking-stat-label">Incidents with Ambulance</div>
+            </div>
+          </div>
+
+          <div class="incident-cards">
+        `;
+
+        incidents.forEach(incident => {
+          const incidentTime = parseTimestamp(incident.timestamp);
+          const incidentIdShort = incident._id ? incident._id.substring(0, 8) + "..." : "N/A";
+          
+          // Check if this incident has an ambulance assigned
+          const ambulanceAssignment = ambulanceMap[incident._id] || ambulanceMap[incident.incident_id];
+          const hasAmbulance = !!ambulanceAssignment;
+
+          // Create Google Maps link
+          const mapsLink = incident.lat && incident.lng ? 
+            `<a href="${generateGoogleMapsLink(incident.lat, incident.lng)}" target="_blank" class="map-link-large">
+              <i class="fas fa-map-marker-alt"></i> 
+              View Location on Google Maps
+              <i class="fas fa-external-link-alt" style="font-size: 0.8rem; margin-left: 5px;"></i>
+            </a>` : 
+            '<span class="no-location">No location data</span>';
+
+          // Create coordinates display
+          const coordinates = incident.lat && incident.lng ? 
+            `<div class="coordinates">${incident.lat.toFixed(6)}, ${incident.lng.toFixed(6)}</div>` : 
+            '';
+
+          html += `
+            <div class="incident-card">
+              <div class="incident-card-header">
+                <div class="incident-title">
+                  <h3>Incident: ${incidentIdShort}</h3>
+                  <span class="badge ${hasAmbulance ? 'success' : 'warning'}">
+                    ${hasAmbulance ? 'Ambulance Assigned' : 'No Ambulance'}
+                  </span>
+                </div>
+                <div class="incident-meta">
+                  <div><strong>User:</strong> ${incident.user_name || 'Unknown'}</div>
+                  <div><strong>Time:</strong> ${incidentTime}</div>
+                  <div><strong>Type:</strong> ${incident.metadata?.manual ? 'Manual SOS' : 'Auto-detected'}</div>
+                  <div class="location-display">
+                    <strong>Location:</strong> 
+                    ${mapsLink}
+                    ${coordinates}
+                  </div>
+                </div>
+              </div>
+
+              <div class="incident-card-body">
+                <div class="assignment-stats">
+                  <div class="assignment-stat">
+                    <i class="fas fa-ambulance"></i>
+                    <span>${hasAmbulance ? '1 Assigned' : '0 Assigned'}</span>
+                  </div>
+                  <div class="assignment-stat">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>${incident.lat ? 'Location Available' : 'No Location'}</span>
+                  </div>
+                  <div class="assignment-stat">
+                    <i class="fas fa-bell"></i>
+                    <span>${incident.metadata?.manual ? 'Manual Alert' : 'Auto Alert'}</span>
+                  </div>
+                </div>
+
+                <div class="ambulance-assignments">
+                  <h4>Ambulance Assignment</h4>
+          `;
+
+          if (hasAmbulance && ambulanceAssignment) {
+            html += `
+              <div class="ambulance-card">
+                <div class="ambulance-info">
+                  <div class="ambulance-header">
+                    <i class="fas fa-ambulance"></i>
+                    <strong>Vehicle: ${ambulanceAssignment.vehicle_number || 'N/A'}</strong>
+                    <span class="badge ${ambulanceAssignment.status === 'on-duty' ? 'success' : 'warning'}">
+                      ${ambulanceAssignment.status || 'unknown'}
+                    </span>
+                  </div>
+                  <div class="ambulance-details">
+                    <div><strong>Driver:</strong> ${ambulanceAssignment.driver_name || 'N/A'}</div>
+                    <div><strong>Phone:</strong> ${ambulanceAssignment.phone || 'N/A'}</div>
+                    <div><strong>Hospital:</strong> ${ambulanceAssignment.hospital_name || 'N/A'}</div>
+                    <div><strong>Assigned to Incident:</strong> ${ambulanceAssignment.current_incident_id ? ambulanceAssignment.current_incident_id.substring(0, 8) + '...' : 'N/A'}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else {
+            html += `
+              <div class="no-assignments">
+                <i class="fas fa-ambulance"></i>
+                <p>No ambulance assigned to this incident</p>
+                <small>Hospital needs to assign an ambulance from their dashboard</small>
+              </div>
+            `;
+          }
+
+          html += `
+                </div>
+
+                <div class="incident-details">
+                  <h4>Incident Details</h4>
+                  <div class="incident-detail-grid">
+                    <div class="detail-item">
+                      <strong>Incident ID:</strong> ${incident.incident_id || incident._id}
+                    </div>
+                    <div class="detail-item">
+                      <strong>User Email:</strong> ${incident.user_email || 'N/A'}
+                    </div>
+                    <div class="detail-item">
+                      <strong>Acceleration:</strong> ${incident.accel_mag ? (Number(incident.accel_mag).toFixed(2) + " m/s²") : "N/A"}
+                    </div>
+                    <div class="detail-item">
+                      <strong>Speed:</strong> ${incident.speed ? (Number(incident.speed).toFixed(2) + " km/h") : "0 km/h"}
+                    </div>
+                    <div class="detail-item">
+                      <strong>Alert Type:</strong> ${incident.metadata?.sos_type === 'self' ? 'SOS for Self' : incident.metadata?.sos_type === 'other' ? 'SOS for Others' : 'Auto-detected'}
+                    </div>
+                    <div class="detail-item">
+                      <strong>Location:</strong> 
+                      ${mapsLink}
+                      ${coordinates}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="incident-card-actions">
+                <button class="btn btn-outline" onclick="viewIncidentDetails('${incident._id}')">
+                  <i class="fas fa-eye"></i> View Details
+                </button>
+                ${incident.lat && incident.lng ? `
+                <a href="${generateGoogleMapsLink(incident.lat, incident.lng)}" target="_blank" class="btn btn-primary">
+                  <i class="fas fa-map-marked-alt"></i> Open Maps
+                </a>
+                ` : ''}
+                ${hasAmbulance ? `
+                <button class="btn btn-success" onclick="viewAmbulanceDetails('${ambulanceAssignment.ambulance_id || ambulanceAssignment._id}')">
+                  <i class="fas fa-ambulance"></i> Ambulance Info
+                </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      async function createTestAssignments() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/create-test-assignments`, {
+            method: 'POST',
+            headers: { 
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+          
+          if (result.success) {
+            alert(`Successfully created ${result.assignments_created} test assignments`);
+            loadTrackingData();
+          } else {
+            throw new Error(result.error || 'Failed to create test assignments');
+          }
+        } catch (error) {
+          alert('Error creating test assignments: ' + error.message);
+        }
+      }
+
+      // ---------- POLICE OFFICERS ----------
+      async function loadPoliceData() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/police-stations`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch police officers");
+          const policeOfficers = await response.json();
+          displayPoliceOfficers(policeOfficers);
+        } catch (error) {
+          console.error("Error loading police officers:", error);
+          document.getElementById("policeContainer").innerHTML =
+            `<div class="error">Failed to load police officers: ${error.message}</div>`;
+        }
+      }
+
+      function displayPoliceOfficers(policeOfficers) {
+        const container = document.getElementById("policeContainer");
+
+        if (!policeOfficers || policeOfficers.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-shield-alt fa-3x"></i>
+              <h3>No Police Officers Found</h3>
+              <p>No police officers have been registered in the system yet.</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = `
+          <div class="police-stats">
+            <div class="police-stat">
+              <div class="police-stat-value">${policeOfficers.length}</div>
+              <div class="police-stat-label">Total Officers</div>
+            </div>
+            <div class="police-stat">
+              <div class="police-stat-value">${policeOfficers.filter(officer => officer.status === 'active').length}</div>
+              <div class="police-stat-label">Active Officers</div>
+            </div>
+            <div class="police-stat">
+              <div class="police-stat-value">${new Set(policeOfficers.map(officer => officer.police_station)).size}</div>
+              <div class="police-stat-label">Police Stations</div>
+            </div>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Officer Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Police Station</th>
+                <th>Designation</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        policeOfficers.forEach((officer) => {
+          const statusClass = officer.status === 'active' ? 'status-active' : 
+                             officer.status === 'inactive' ? 'status-inactive' : 'status-busy';
+          
+          const lastLogin = officer.last_login ? parseTimestamp(officer.last_login) : 'Never';
+
+          html += `
+            <tr>
+              <td><strong>${officer.full_name || 'N/A'}</strong></td>
+              <td>${officer.username || 'N/A'}</td>
+              <td>${officer.email || 'N/A'}</td>
+              <td>${officer.police_station || 'N/A'}</td>
+              <td>${officer.designation || 'N/A'}</td>
+              <td>
+                <span class="police-status-badge ${statusClass}">
+                  ${officer.status || 'unknown'}
+                </span>
+              </td>
+              <td>${lastLogin}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-outline" onclick="viewPoliceOfficerDetails('${officer._id}')">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn btn-danger" onclick="deletePoliceOfficer('${officer._id}')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+      }
+
+      async function viewPoliceOfficerDetails(officerId) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/police-stations/${officerId}`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch police officer details");
+          const officer = await response.json();
+          displayPoliceOfficerModal(officer);
+        } catch (error) {
+          console.error("Error loading police officer details:", error);
+          alert("Failed to load police officer details: " + error.message);
+        }
+      }
+
+      function displayPoliceOfficerModal(officer) {
+        const modal = document.getElementById("policeModal");
+        const content = document.getElementById("policeModalContent");
+
+        const statusClass = officer.status === 'active' ? 'status-active' : 
+                           officer.status === 'inactive' ? 'status-inactive' : 'status-busy';
+        
+        const createdDate = parseTimestamp(officer.created_at);
+        const lastLogin = officer.last_login ? parseTimestamp(officer.last_login) : 'Never';
+
+        let html = `
+          <div class="police-header-info">
+            <div class="police-icon">
+              <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="police-title">
+              <h3>${officer.full_name || 'N/A'}</h3>
+              <div class="police-subtitle">
+                ${officer.designation || 'Police Officer'} • 
+                <span class="police-status-badge ${statusClass}">
+                  ${officer.status || 'Unknown Status'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="police-details-grid">
+            <div class="police-detail-item">
+              <div class="police-detail-label">Officer ID</div>
+              <div class="police-detail-value">${officer._id || 'N/A'}</div>
+            </div>
+            <div class="police-detail-item">
+              <div class="police-detail-label">Full Name</div>
+              <div class="police-detail-value">${officer.full_name || 'N/A'}</div>
+            </div>
+            <div class="police-detail-item">
+              <div class="police-detail-label">Username</div>
+              <div class="police-detail-value">${officer.username || 'N/A'}</div>
+            </div>
+            <div class="police-detail-item">
+              <div class="police-detail-label">Email</div>
+              <div class="police-detail-value">${officer.email || 'N/A'}</div>
+            </div>
+            <div class="police-detail-item">
+              <div class="police-detail-label">Police Station</div>
+              <div class="police-detail-value">${officer.police_station || 'N/A'}</div>
+            </div>
+            <div class="police-detail-item">
+              <div class="police-detail-label">Designation</div>
+              <div class="police-detail-value">${officer.designation || 'N/A'}</div>
+            </div>
+            <div class="police-detail-item">
+              <div class="police-detail-label">Role</div>
+              <div class="police-detail-value">${officer.role || 'N/A'}</div>
+            </div>
+            <div class="police-detail-item">
+              <div class="police-detail-label">Status</div>
+              <div class="police-detail-value">
+                <span class="police-status-badge ${statusClass}">
+                  ${officer.status || 'Unknown'}
+                </span>
+              </div>
+            </div>
+            <div class="police-detail-item">
+              <div class="police-detail-label">Account Created</div>
+              <div class="police-detail-value">${createdDate}</div>
+            </div>
+            <div class="police-detail-item">
+              <div class="police-detail-label">Last Login</div>
+              <div class="police-detail-value">${lastLogin}</div>
+            </div>
+          </div>
+
+          <div class="police-assignment-section">
+            <h4><i class="fas fa-info-circle"></i> Account Information</h4>
+            <div class="no-assignment">
+              <i class="fas fa-user-shield fa-2x"></i>
+              <p>This is a police officer account with access to the police dashboard.</p>
+              <p><strong>Station:</strong> ${officer.police_station || 'Not assigned'}</p>
+              <p><strong>Role:</strong> ${officer.role || 'police'}</p>
+            </div>
+          </div>
+
+          <div class="police-actions">
+            <button class="btn btn-danger" onclick="deletePoliceOfficer('${officer._id}')">
+              <i class="fas fa-trash"></i> Delete Police Officer Account
+            </button>
+          </div>
+        `;
+
+        content.innerHTML = html;
+        modal.style.display = "flex";
+      }
+
+      async function deletePoliceOfficer(officerId) {
+        if (!confirm("Are you sure you want to delete this police officer account? This action cannot be undone.")) return;
+        
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/police-stations/${officerId}`, {
+            method: 'DELETE',
+            headers: { 
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            alert("Police officer account deleted successfully");
+            closePoliceModal();
+            loadPoliceData();
+          } else {
+            throw new Error(result.error || "Failed to delete police officer account");
+          }
+        } catch (error) {
+          alert("Error deleting police officer account: " + error.message);
+        }
+      }
+
+      function closePoliceModal() {
+        document.getElementById("policeModal").style.display = "none";
+      }
+
+      // ---------- AMBULANCE ACTIONS ----------
+      async function viewAmbulanceDetails(ambulanceId) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/ambulances/${ambulanceId}`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch ambulance details");
+          const ambulance = await response.json();
+          displayAmbulanceModal(ambulance);
+        } catch (error) {
+          console.error("Error loading ambulance details:", error);
+          alert("Failed to load ambulance details: " + error.message);
+        }
+      }
+
+      function displayAmbulanceModal(ambulance) {
+        const modal = document.getElementById("ambulanceModal");
+        const content = document.getElementById("ambulanceModalContent");
+
+        // Determine status badge class
+        const statusClass = ambulance.status === 'on-duty' ? 'status-on-duty' : 
+                           ambulance.status === 'off-duty' ? 'status-off-duty' : 
+                           'status-maintenance';
+
+        let html = `
+          <div class="ambulance-header-info">
+            <div class="ambulance-icon">
+              <i class="fas fa-ambulance"></i>
+            </div>
+            <div class="ambulance-title">
+              <h3>Ambulance ${ambulance.vehicle_number || 'N/A'}</h3>
+              <div class="ambulance-subtitle">
+                ${ambulance.hospital_name || 'No Hospital Assigned'} • 
+                <span class="ambulance-status-badge ${statusClass}">
+                  ${ambulance.status || 'Unknown Status'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="ambulance-details-grid">
+            <div class="ambulance-detail-item">
+              <div class="ambulance-detail-label">Ambulance ID</div>
+              <div class="ambulance-detail-value">${ambulance._id || 'N/A'}</div>
+            </div>
+            <div class="ambulance-detail-item">
+              <div class="ambulance-detail-label">Vehicle Number</div>
+              <div class="ambulance-detail-value">${ambulance.vehicle_number || 'N/A'}</div>
+            </div>
+            <div class="ambulance-detail-item">
+              <div class="ambulance-detail-label">Driver Name</div>
+              <div class="ambulance-detail-value">${ambulance.driver_name || 'N/A'}</div>
+            </div>
+            <div class="ambulance-detail-item">
+              <div class="ambulance-detail-label">Driver Phone</div>
+              <div class="ambulance-detail-value">
+                ${ambulance.phone ? 
+                  `<a href="tel:${ambulance.phone}" class="map-link">
+                    <i class="fas fa-phone"></i> ${ambulance.phone}
+                  </a>` : 
+                  'N/A'
+                }
+              </div>
+            </div>
+            <div class="ambulance-detail-item">
+              <div class="ambulance-detail-label">Hospital</div>
+              <div class="ambulance-detail-value">${ambulance.hospital_name || 'N/A'}</div>
+            </div>
+            <div class="ambulance-detail-item">
+              <div class="ambulance-detail-label">Status</div>
+              <div class="ambulance-detail-value">
+                <span class="ambulance-status-badge ${statusClass}">
+                  ${ambulance.status || 'Unknown'}
+                </span>
+              </div>
+            </div>
+            <div class="ambulance-detail-item">
+              <div class="ambulance-detail-label">Current Assignment</div>
+              <div class="ambulance-detail-value">
+                ${ambulance.current_incident_id ? 'Assigned to Incident' : 'Available'}
+              </div>
+            </div>
+            <div class="ambulance-detail-item">
+              <div class="ambulance-detail-label">Assignment Time</div>
+              <div class="ambulance-detail-value">
+                ${ambulance.assignment_time ? parseTimestamp(ambulance.assignment_time) : 'Not assigned'}
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Show incident assignment details if assigned
+        if (ambulance.current_incident_id && ambulance.incident_details) {
+          html += `
+            <div class="ambulance-assignment-section">
+              <h4><i class="fas fa-exclamation-triangle"></i> Current Incident Assignment</h4>
+              <div class="assignment-details">
+                <div class="incident-detail-grid">
+                  <div class="detail-item">
+                    <strong>Incident ID:</strong> ${ambulance.incident_details.incident_id || ambulance.current_incident_id}
+                  </div>
+                  <div class="detail-item">
+                    <strong>User:</strong> ${ambulance.incident_details.user_name || 'Unknown'}
+                  </div>
+                  <div class="detail-item">
+                    <strong>User Email:</strong> ${ambulance.incident_details.user_email || 'N/A'}
+                  </div>
+                  <div class="detail-item">
+                    <strong>Location:</strong> 
+                    ${ambulance.incident_details.lat && ambulance.incident_details.lng ? 
+                      `<a href="${generateGoogleMapsLink(ambulance.incident_details.lat, ambulance.incident_details.lng)}" target="_blank" class="map-link">
+                        <i class="fas fa-map-marker-alt"></i> View Incident Location
+                      </a>` : 
+                      'N/A'
+                    }
+                  </div>
+                  <div class="detail-item">
+                    <strong>Incident Time:</strong> ${parseTimestamp(ambulance.incident_details.timestamp)}
+                  </div>
+                </div>
+                <div class="ambulance-actions">
+                  <button class="btn btn-outline" onclick="viewIncidentDetails('${ambulance.current_incident_id}')">
+                    <i class="fas fa-eye"></i> View Incident Details
+                  </button>
+                  <button class="btn btn-warning" onclick="unassignAmbulance('${ambulance._id}')">
+                    <i class="fas fa-times"></i> Unassign Ambulance
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (ambulance.current_incident_id) {
+          html += `
+            <div class="ambulance-assignment-section">
+              <h4><i class="fas fa-exclamation-triangle"></i> Current Incident Assignment</h4>
+              <div class="assignment-details">
+                <div class="detail-item">
+                  <strong>Assigned to Incident ID:</strong> ${ambulance.current_incident_id}
+                </div>
+                <div class="ambulance-actions">
+                  <button class="btn btn-outline" onclick="viewIncidentDetails('${ambulance.current_incident_id}')">
+                    <i class="fas fa-eye"></i> View Incident Details
+                  </button>
+                  <button class="btn btn-warning" onclick="unassignAmbulance('${ambulance._id}')">
+                    <i class="fas fa-times"></i> Unassign Ambulance
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="ambulance-assignment-section">
+              <h4><i class="fas fa-info-circle"></i> Current Status</h4>
+              <div class="no-assignment">
+                <i class="fas fa-ambulance fa-2x"></i>
+                <p>This ambulance is currently available and not assigned to any incident.</p>
+              </div>
+            </div>
+          `;
+        }
+
+        // Add action buttons
+        html += `
+          <div class="ambulance-actions">
+            <button class="btn btn-primary" onclick="callAmbulanceDriver('${ambulance.phone}')" ${!ambulance.phone ? 'disabled' : ''}>
+              <i class="fas fa-phone"></i> Call Driver
+            </button>
+            <button class="btn btn-outline" onclick="editAmbulance('${ambulance._id}')">
+              <i class="fas fa-edit"></i> Edit Ambulance
+            </button>
+            <button class="btn btn-danger" onclick="deleteAmbulance('${ambulance._id}')">
+              <i class="fas fa-trash"></i> Delete Ambulance
+            </button>
+          </div>
+        `;
+
+        content.innerHTML = html;
+        modal.style.display = "flex";
+      }
+
+      function closeAmbulanceModal() {
+        document.getElementById("ambulanceModal").style.display = "none";
+      }
+
+      // Helper functions for ambulance actions
+      function callAmbulanceDriver(phoneNumber) {
+        if (phoneNumber) {
+          if (confirm(`Call ambulance driver at ${phoneNumber}?`)) {
+            window.open(`tel:${phoneNumber}`);
+          }
+        } else {
+          alert('No phone number available for this ambulance driver.');
+        }
+      }
+
+      function editAmbulance(ambulanceId) {
+        alert(`Edit ambulance functionality would open for ID: ${ambulanceId}\n\nThis feature would allow modifying ambulance details in a future update.`);
+      }
+
+      async function unassignAmbulance(ambulanceId) {
+        if (!confirm("Are you sure you want to unassign this ambulance from the current incident?")) return;
+        
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/ambulances/${ambulanceId}/unassign`, {
+            method: 'POST',
+            headers: { 
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            alert("Ambulance unassigned successfully");
+            closeAmbulanceModal();
+            loadTrackingData();
+          } else {
+            throw new Error(result.error || "Failed to unassign ambulance");
+          }
+        } catch (error) {
+          alert("Error unassigning ambulance: " + error.message);
+        }
+      }
+
+      async function deleteAmbulance(ambulanceId) {
+        if (!confirm("Are you sure you want to delete this ambulance? This action cannot be undone.")) return;
+        
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/ambulances/${ambulanceId}`, {
+            method: 'DELETE',
+            headers: { 
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            alert("Ambulance deleted successfully");
+            closeAmbulanceModal();
+            loadTrackingData();
+          } else {
+            throw new Error(result.error || "Failed to delete ambulance");
+          }
+        } catch (error) {
+          alert("Error deleting ambulance: " + error.message);
+        }
+      }
+
+      // ---------- CHART ----------
+      function updateIncidentTypesChart(incidentTypes) {
+        const ctx = document.getElementById("incidentTypesChart").getContext("2d");
+
+        if (window.incidentTypesChartInstance) {
+          window.incidentTypesChartInstance.destroy();
+        }
+
+        const labels = [
+          "Manual SOS (Self)",
+          "Manual SOS (Others)",
+          "Auto-detected",
+        ];
+        const data = [
+          incidentTypes.manual_self ?? 0,
+          incidentTypes.manual_other ?? 0,
+          incidentTypes.auto_detected ?? 0,
+        ];
+
+        window.incidentTypesChartInstance = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                data: data,
+                backgroundColor: ["#4361ee", "#f72585", "#4cc9f0"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom" },
+            },
+          },
+        });
+      }
+
+      // ---------- INCIDENT ACTIONS ----------
+      async function viewIncidentDetails(incidentId) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/dashboard/incidents/${incidentId}`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch incident details");
+          const incident = await response.json();
+
+          displayIncidentModal(incident);
+        } catch (error) {
+          console.error("Error loading incident details:", error);
+          alert("Failed to load incident details: " + error.message);
+        }
+      }
+
+      function displayIncidentModal(incident) {
+        const modal = document.getElementById("incidentModal");
+        const content = document.getElementById("incidentModalContent");
+
+        const isManual = incident.metadata?.manual;
+        const sosType = incident.metadata?.sos_type;
+        const incidentType = isManual ? (sosType === "other" ? "SOS for Others" : "SOS for Self") : "Auto-detected";
+
+        const time = parseTimestamp(incident.created_at ?? incident.timestamp);
+        
+        // Create Google Maps link for modal
+        const mapsLink = incident.lat && incident.lng ? 
+          `<a href="${generateGoogleMapsLink(incident.lat, incident.lng)}" target="_blank" class="map-link-large">
+            <i class="fas fa-map-marker-alt"></i> 
+            Open in Google Maps
+            <i class="fas fa-external-link-alt" style="font-size: 0.8rem; margin-left: 5px;"></i>
+          </a>` : 
+          'N/A';
+
+        // Create coordinates display
+        const coordinates = incident.lat && incident.lng ? 
+          `<div style="margin-top: 5px; font-size: 0.9rem; color: #666; font-family: monospace;">
+            Coordinates: ${incident.lat.toFixed(6)}, ${incident.lng.toFixed(6)}
+          </div>` : 
+          '';
+
+        let html = `
+          <div class="incident-details-grid">
+            <div class="incident-detail-item"><div class="incident-detail-label">Incident ID</div><div class="incident-detail-value">${incident._id ?? "N/A"}</div></div>
+            <div class="incident-detail-item"><div class="incident-detail-label">User Name</div><div class="incident-detail-value">${incident.user_name ?? "Unknown"}</div></div>
+            <div class="incident-detail-item"><div class="incident-detail-label">User Email</div><div class="incident-detail-value">${incident.user_email ?? "N/A"}</div></div>
+            <div class="incident-detail-item"><div class="incident-detail-label">Incident Type</div><div class="incident-detail-value">${incidentType}</div></div>
+            <div class="incident-detail-item"><div class="incident-detail-label">Location</div><div class="incident-detail-value">
+              ${mapsLink}
+              ${coordinates}
+            </div></div>
+            <div class="incident-detail-item"><div class="incident-detail-label">Acceleration</div><div class="incident-detail-value">${incident.accel_mag ? Number(incident.accel_mag).toFixed(2) + " m/s²" : "N/A"}</div></div>
+            <div class="incident-detail-item"><div class="incident-detail-label">Timestamp</div><div class="incident-detail-value">${time}</div></div>
+            <div class="incident-detail-item"><div class="incident-detail-label">Status</div><div class="incident-detail-value"><span class="badge ${isManual ? "danger" : "warning"}">${isManual ? "Manual" : "Auto-detected"}</span></div></div>
+          </div>
+        `;
+
+        if (incident.metadata) {
+          html += `<div class="incident-detail-item-full"><div class="incident-detail-label">Additional Information</div><div class="user-details"><pre style="white-space: pre-wrap; font-size: 0.9rem;">${JSON.stringify(incident.metadata, null, 2)}</pre></div></div>`;
+        }
+
+        content.innerHTML = html;
+        modal.style.display = "flex";
+      }
+
+      function closeIncidentModal() {
+        document.getElementById("incidentModal").style.display = "none";
+      }
+
+      async function deleteIncident(incidentId) {
+        if (!confirm("Are you sure you want to delete this incident?")) return;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/dashboard/incidents/${incidentId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            alert("Incident deleted successfully");
+            loadIncidentsData();
+          } else {
+            throw new Error(result.error || "Failed to delete incident");
+          }
+        } catch (error) {
+          alert("Error deleting incident: " + error.message);
+        }
+      }
+
+      // ---------- USER ACTIONS ----------
+      async function viewUserDetails(userId) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch user details");
+          const user = await response.json();
+          displayUserModal(user);
+        } catch (error) {
+          console.error("Error loading user details:", error);
+          alert("Failed to load user details: " + error.message);
+        }
+      }
+
+      function displayUserModal(user) {
+        const modal = document.getElementById("userModal");
+        const content = document.getElementById("userModalContent");
+
+        const joinDate = parseTimestamp(user.created_at);
+        const lastIncident = user.last_incident ? parseTimestamp(user.last_incident) : "No incidents";
+
+        let html = `
+          <div class="user-details-grid-modal">
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">User ID</div><div class="user-detail-value-modal">${user._id ?? "N/A"}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Name</div><div class="user-detail-value-modal">${user.name ?? "N/A"}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Email</div><div class="user-detail-value-modal">${user.email ?? "N/A"}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Username</div><div class="user-detail-value-modal">${user.username ?? "N/A"}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Joined Date</div><div class="user-detail-value-modal">${joinDate}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Total Incidents</div><div class="user-detail-value-modal">${user.total_incidents ?? 0}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Last Incident</div><div class="user-detail-value-modal">${lastIncident}</div></div>
+          </div>
+        `;
+
+        if (user.profile) {
+          html += `<div class="user-full-profile"><div class="user-detail-label-modal">Profile Information</div><div class="user-details"><pre style="white-space: pre-wrap; font-size: 0.9rem;">${JSON.stringify(user.profile, null, 2)}</pre></div></div>`;
+        }
+
+        html += `<div class="contacts-section"><h3>Emergency Contacts</h3>`;
+
+        if (user.emergency_contacts && user.emergency_contacts.length > 0) {
+          user.emergency_contacts.forEach((contact) => {
+            html += `<div class="contact-card"><div class="contact-name">${contact.name ?? "Unnamed Contact"}</div><div class="contact-info"><div><strong>Email:</strong> ${contact.email ?? "N/A"}</div><div><strong>Phone:</strong> ${contact.phone ?? "N/A"}</div><div><strong>Relationship:</strong> ${contact.relationship ?? "N/A"}</div><div><strong>Priority:</strong> ${contact.priority ?? "N/A"}</div></div></div>`;
+          });
+        } else {
+          html += `<div class="no-contacts">No emergency contacts found</div>`;
+        }
+
+        html += `</div>`;
+
+        content.innerHTML = html;
+        modal.style.display = "flex";
+      }
+
+      function closeUserModal() {
+        document.getElementById("userModal").style.display = "none";
+      }
+
+      async function deleteUser(userId) {
+        if (!confirm("Are you sure you want to delete this user? This will also delete all their incidents, profiles, and contacts.")) return;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            alert("User deleted successfully");
+            loadUsersData();
+          } else {
+            throw new Error(result.error || "Failed to delete user");
+          }
+        } catch (error) {
+          alert("Error deleting user: " + error.message);
+        }
+      }
+
+      // ---------- HOSPITAL ACTIONS ----------
+      async function viewHospitalDetails(hospitalId) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/hospitals/${hospitalId}`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch hospital details");
+          const hospital = await response.json();
+          displayHospitalModal(hospital);
+        } catch (error) {
+          console.error("Error loading hospital details:", error);
+          alert("Failed to load hospital details: " + error.message);
+        }
+      }
+
+      function displayHospitalModal(hospital) {
+        const modal = document.getElementById("hospitalModal");
+        const content = document.getElementById("hospitalModalContent");
+
+        let html = `
+          <div class="user-details-grid-modal">
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Hospital ID</div><div class="user-detail-value-modal">${hospital._id ?? "N/A"}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Hospital Name</div><div class="user-detail-value-modal">${hospital.hospital_name ?? "N/A"}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Email</div><div class="user-detail-value-modal">${hospital.email ?? "N/A"}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Phone</div><div class="user-detail-value-modal">${hospital.phone ?? "N/A"}</div></div>
+            <div class="user-detail-item-modal"><div class="user-detail-label-modal">Location</div><div class="user-detail-value-modal">${hospital.location ?? "N/A"}</div></div>
+          </div>
+        `;
+
+        content.innerHTML = html;
+        modal.style.display = "flex";
+      }
+
+      function closeHospitalModal() {
+        document.getElementById("hospitalModal").style.display = "none";
+      }
+
+      async function deleteHospital(hospitalId) {
+        if (!confirm("Are you sure you want to delete this hospital?")) return;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/admin/hospitals/${hospitalId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            alert("Hospital deleted successfully");
+            loadHospitalsData();
+          } else {
+            throw new Error(result.error || "Failed to delete hospital");
+          }
+        } catch (error) {
+          alert("Error deleting hospital: " + error.message);
+        }
+      }
+
+      // ---------- EXPORT INCIDENTS ----------
+      async function exportIncidents() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/dashboard/incidents/export`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (!response.ok) throw new Error("Failed to export incidents");
+
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = `incidents-${new Date().toISOString().split("T")[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+
+          alert("Incidents exported successfully as CSV");
+        } catch (error) {
+          console.error("Error exporting incidents:", error);
+          alert("Failed to export incidents: " + error.message);
+        }
+      }
+
+      // ---------- EVENT LISTENERS & INITIALIZATION ----------
+      document.addEventListener("DOMContentLoaded", function () {
+        // sidebar items click -> showTab
+        document.querySelectorAll(".menu-item").forEach((item) => {
+          item.addEventListener("click", function () {
+            const tabId = this.getAttribute("data-tab");
+            showTab(tabId);
+          });
+        });
+
+        // modal close buttons
+        document.querySelectorAll(".modal-close").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const closeTarget = this.getAttribute("data-close");
+            if (closeTarget) {
+              document.getElementById(closeTarget).style.display = "none";
+            }
+          });
+        });
+
+        // clicking outside modal closes it
+        document.querySelectorAll(".modal").forEach((m) => {
+          m.addEventListener("click", (e) => {
+            if (e.target === m) m.style.display = "none";
+          });
+        });
+
+        // refresh buttons
+        document.getElementById("refreshDashboardBtn").addEventListener("click", loadDashboardData);
+        document.getElementById("refreshIncidentsBtn").addEventListener("click", loadIncidentsData);
+        document.getElementById("refreshUsersBtn").addEventListener("click", loadUsersData);
+        document.getElementById("refreshHospitalsBtn").addEventListener("click", loadHospitalsData);
+        document.getElementById("refreshTrackingBtn").addEventListener("click", loadTrackingData);
+        document.getElementById("refreshPoliceBtn").addEventListener("click", loadPoliceData);
+        document.getElementById("exportIncidentsBtn").addEventListener("click", exportIncidents);
+        document.getElementById("createTestAssignmentsBtn").addEventListener("click", createTestAssignments);
+      });
+    </script>
+  </body>
+</html>
